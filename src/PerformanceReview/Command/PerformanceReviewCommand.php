@@ -15,6 +15,9 @@ use PerformanceReview\Analyzer\FrontendAnalyzer;
 use PerformanceReview\Analyzer\IndexerCronAnalyzer;
 use PerformanceReview\Analyzer\PhpConfigurationAnalyzer;
 use PerformanceReview\Analyzer\MysqlConfigurationAnalyzer;
+use PerformanceReview\Analyzer\RedisConfigurationAnalyzer;
+use PerformanceReview\Analyzer\ApiAnalyzer;
+use PerformanceReview\Analyzer\ThirdPartyAnalyzer;
 use PerformanceReview\Model\IssueFactory;
 use PerformanceReview\Model\ReportGenerator;
 use Magento\Framework\App\DeploymentConfig;
@@ -31,6 +34,7 @@ use Magento\Framework\Component\ComponentRegistrarInterface;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Indexer\IndexerRegistry;
 use Magento\Cron\Model\ResourceModel\Schedule\CollectionFactory as ScheduleCollectionFactory;
+use Magento\Framework\App\ProductMetadataInterface;
 
 /**
  * Performance review command for n98-magerun2
@@ -84,6 +88,21 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
     private ?MysqlConfigurationAnalyzer $mysqlConfigurationAnalyzer = null;
     
     /**
+     * @var RedisConfigurationAnalyzer
+     */
+    private ?RedisConfigurationAnalyzer $redisConfigurationAnalyzer = null;
+    
+    /**
+     * @var ApiAnalyzer
+     */
+    private ?ApiAnalyzer $apiAnalyzer = null;
+    
+    /**
+     * @var ThirdPartyAnalyzer
+     */
+    private ?ThirdPartyAnalyzer $thirdPartyAnalyzer = null;
+    
+    /**
      * @var IssueFactory
      */
     private ?IssueFactory $issueFactory = null;
@@ -99,7 +118,7 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
     protected function configure(): void
     {
         $this->setName('performance:review')
-            ->setDescription('Run a comprehensive performance review of your Magento 2 installation')
+            ->setDescription('Run a comprehensive performance review of your Magento 2 installation (v2.0)')
             ->addOption(
                 'output-file',
                 'o',
@@ -143,6 +162,7 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
      * @param Filesystem $filesystem
      * @param IndexerRegistry $indexerRegistry
      * @param ScheduleCollectionFactory $scheduleCollectionFactory
+     * @param ProductMetadataInterface $productMetadata
      */
     public function inject(
         DeploymentConfig $deploymentConfig,
@@ -158,7 +178,8 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
         ComponentRegistrarInterface $componentRegistrar,
         Filesystem $filesystem,
         IndexerRegistry $indexerRegistry,
-        ScheduleCollectionFactory $scheduleCollectionFactory
+        ScheduleCollectionFactory $scheduleCollectionFactory,
+        ProductMetadataInterface $productMetadata
     ) {
         $this->issueFactory = new IssueFactory();
         $this->reportGenerator = new ReportGenerator();
@@ -214,6 +235,24 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
         
         $this->mysqlConfigurationAnalyzer = new MysqlConfigurationAnalyzer(
             $resourceConnection,
+            $this->issueFactory
+        );
+        
+        $this->redisConfigurationAnalyzer = new RedisConfigurationAnalyzer(
+            $deploymentConfig,
+            $this->issueFactory
+        );
+        
+        $this->apiAnalyzer = new ApiAnalyzer(
+            $scopeConfig,
+            $resourceConnection,
+            $this->issueFactory
+        );
+        
+        $this->thirdPartyAnalyzer = new ThirdPartyAnalyzer(
+            $moduleList,
+            $productMetadata,
+            $componentRegistrar,
             $this->issueFactory
         );
     }
@@ -307,9 +346,28 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
                 $output->writeln('<info>✓</info>');
             }
             
-            // TODO: Add other analyzers here as they are implemented
-            if ($category && !in_array($category, ['config', 'database', 'modules', 'codebase', 'frontend', 'indexing', 'php', 'mysql'])) {
-                $output->writeln(sprintf('<comment>Category "%s" analyzer not yet implemented.</comment>', $category));
+            // Run Redis configuration analysis
+            if (!$category || $category === 'redis') {
+                $output->write('Checking Redis configuration... ');
+                $redisIssues = $this->redisConfigurationAnalyzer->analyze();
+                $issues = array_merge($issues, $redisIssues);
+                $output->writeln('<info>✓</info>');
+            }
+            
+            // Run API analysis
+            if (!$category || $category === 'api') {
+                $output->write('Checking API configuration... ');
+                $apiIssues = $this->apiAnalyzer->analyze();
+                $issues = array_merge($issues, $apiIssues);
+                $output->writeln('<info>✓</info>');
+            }
+            
+            // Run third-party extension analysis
+            if (!$category || $category === 'thirdparty') {
+                $output->write('Checking third-party extensions... ');
+                $thirdPartyIssues = $this->thirdPartyAnalyzer->analyze();
+                $issues = array_merge($issues, $thirdPartyIssues);
+                $output->writeln('<info>✓</info>');
             }
             
         } catch (\Exception $e) {

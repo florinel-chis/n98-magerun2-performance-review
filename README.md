@@ -1,145 +1,129 @@
 # Performance Review Module for n98-magerun2
 
-A comprehensive performance analysis tool for Magento 2 installations, ported from the original Magento module to work as an n98-magerun2 extension.
-
-## Features
-
-- **Configuration Analysis**: Checks cache backends, session storage, JS/CSS optimization settings
-- **Mode Detection**: Verifies if Magento is running in production mode
-- **Cache Status**: Identifies disabled cache types
-- **Performance Recommendations**: Provides actionable recommendations for each issue found
-- **Priority Levels**: Issues are categorized as High, Medium, or Low priority
-- **Detailed Reports**: Optional detailed view shows additional context for each issue
+This module adds a comprehensive performance review command to n98-magerun2 that analyzes your Magento 2 installation and provides detailed recommendations for optimization.
 
 ## Installation
 
-1. Create the module directory in your n98-magerun2 modules folder:
-```bash
-mkdir -p ~/.n98-magerun2/modules/
-```
+1. Create the modules directory if it doesn't exist:
+   ```bash
+   mkdir -p ~/.n98-magerun2/modules
+   ```
 
 2. Copy this module to the modules directory:
-```bash
-cp -r performance-review ~/.n98-magerun2/modules/
-```
+   ```bash
+   cp -r performance-review ~/.n98-magerun2/modules/
+   ```
 
-3. Verify installation:
-```bash
-n98-magerun2.phar list | grep performance
-```
+3. Verify the module is loaded:
+   ```bash
+   n98-magerun2.phar list performance
+   ```
 
 ## Usage
 
-### Basic Usage
-
-Run a full performance review:
+### Full Performance Review
+Run a complete performance analysis:
 ```bash
 n98-magerun2.phar performance:review
 ```
 
-Run from any directory by specifying Magento root:
+### Category-Specific Analysis
+Analyze specific categories only:
 ```bash
-n98-magerun2.phar performance:review --root-dir=/path/to/magento
-```
-
-### Options
-
-- `--category, -c`: Run specific category only (config, modules, codebase, database, frontend, indexing, thirdparty, api, php, mysql, redis)
-- `--output-file, -o`: Save report to file instead of displaying
-- `--details, -d`: Show detailed information for issues
-- `--no-color`: Disable colored output
-
-### Examples
-
-Run configuration analysis only:
-```bash
+# Configuration settings
 n98-magerun2.phar performance:review --category=config
+
+# Database performance
+n98-magerun2.phar performance:review --category=database
+
+# Module analysis
+n98-magerun2.phar performance:review --category=modules
+
+# Other categories: codebase, frontend, indexing, php, mysql, redis, api, thirdparty
 ```
 
-Save report to file:
+### Save Report to File
 ```bash
 n98-magerun2.phar performance:review --output-file=performance-report.txt
 ```
 
-Show detailed information:
+### Additional Options
 ```bash
+# Disable colored output
+n98-magerun2.phar performance:review --no-color
+
+# Show detailed information for each issue
 n98-magerun2.phar performance:review --details
 ```
 
-## Currently Implemented Analyzers
+## Features
 
-### Configuration Analyzer
-- Application mode check
-- Cache backend configuration (Redis vs File)
-- Page cache configuration
-- Session storage configuration
-- JS/CSS minification and merging settings
-- Flat catalog settings (for older Magento versions)
-- Cache types status
+### Comprehensive Analysis
+The module analyzes 11 different aspects of your Magento 2 installation:
 
-## Planned Analyzers
+1. **Configuration** - Application mode, cache backends, session storage, minification settings
+2. **Database** - Size analysis, table optimization, product/category counts, log tables
+3. **Modules** - Third-party module count, performance-impacting modules, duplicate functionality
+4. **Codebase** - Directory sizes, custom code analysis, core modifications, media files
+5. **Frontend** - JS/CSS optimization, image formats, lazy loading, theme management
+6. **Indexing** - Indexer status, cron health, stuck jobs, schedule optimization
+7. **PHP** - Version, memory limits, extensions, OPcache configuration
+8. **MySQL** - Version, buffer pool, query optimization, storage engines
+9. **Redis** - Configuration, database separation, compression, persistence
+10. **API** - Integration management, OAuth tokens, rate limiting
+11. **Third-party** - Extension compatibility, code quality, development tools
 
-The following analyzers are planned for future releases:
+### Professional Report Format
+- Table-based layout with clear categories
+- Color-coded priorities: 🔴 High, 🟡 Medium, 🟢 Low
+- Current vs Recommended values
+- Detailed explanations for each issue
+- Summary with total issue counts
 
-- **PHP Configuration Analyzer**: Memory limits, OPcache settings, execution time
-- **MySQL Configuration Analyzer**: Query cache, buffer sizes, connection limits
-- **Redis Configuration Analyzer**: Memory usage, persistence settings
-- **Database Analyzer**: Table sizes, missing indexes, query performance
-- **Module Analyzer**: Third-party module conflicts, deprecated modules
-- **Codebase Analyzer**: Custom code quality, overrides, patches
-- **Frontend Analyzer**: Asset optimization, lazy loading, critical CSS
-- **Indexer & Cron Analyzer**: Indexer status, cron schedule issues
-- **API Analyzer**: REST/GraphQL configuration, rate limiting
-- **Third Party Analyzer**: Extension compatibility, known issues
+### Exit Codes
+- `0` - Success (no high priority issues found)
+- `1` - High priority issues detected
 
-## Report Output
+## Example Output
 
-The tool generates a comprehensive report showing:
-
-1. **Summary**: Total issues count by priority
-2. **Categorized Issues**: Issues grouped by category with descriptions
-3. **Priority Indicators**:
-   - `[HIGH]` - Critical issues that significantly impact performance
-   - `[MEDIUM]` - Important optimizations that should be addressed
-   - `[LOW]` - Minor improvements or optional optimizations
-4. **Key Recommendations**: Actionable steps for high-priority issues
-
-## Exit Codes
-
-- `0`: Success, no high-priority issues found
-- `1`: High-priority issues detected that require attention
-
-## Development
-
-### Adding New Analyzers
-
-1. Create analyzer class in `src/PerformanceReview/Analyzer/`
-2. Implement analyze method returning array of IssueInterface objects
-3. Add analyzer to PerformanceReviewCommand
-4. Update module configuration if needed
-
-### Issue Creation
-
-Use the IssueFactory to create issues:
-
-```php
-$this->issueFactory->createHighPriority(
-    'Issue Title',
-    'Detailed description',
-    IssueInterface::CATEGORY_CONFIGURATION,
-    'Recommendation for fixing',
-    ['additional' => 'details']
-);
 ```
+================================================================================
+                    MAGENTO 2 PERFORMANCE REVIEW REPORT
+================================================================================
+Generated: 2025-06-05 10:30:45
+================================================================================
+
+== Config ==
+--------------------------------------------------------------------------------
+Priority   | Recommendation                           | Details                  
+----------+------------------------------------------+---------------------------
+High       | Switch from developer mode to production | Developer mode impacts...
+           |                                          | Current: developer
+           |                                          | Recommended: production
+----------+------------------------------------------+---------------------------
+
+== Database ==
+--------------------------------------------------------------------------------
+Priority   | Recommendation                           | Details                  
+----------+------------------------------------------+---------------------------
+Medium     | Database size exceeds 20GB               | Large database size may...
+           |                                          | Current: 25.3 GB
+           |                                          | Recommended: Under 20GB
+----------+------------------------------------------+---------------------------
+
+[... more issues ...]
+
+================================================================================
+SUMMARY: Found 15 issues (3 high, 8 medium, 4 low)
+================================================================================
+```
+
+## Requirements
+
+- n98-magerun2
+- Magento 2.3.x or higher
+- PHP 7.3 or higher
 
 ## License
 
-This module is open-source software licensed under the MIT license.
-
-## Contributing
-
-Contributions are welcome! Please submit pull requests or issues on GitHub.
-
-## Credits
-
-Based on the original Performance Review module for Magento 2, adapted for n98-magerun2 by the community.
+MIT License
