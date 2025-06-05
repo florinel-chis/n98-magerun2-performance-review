@@ -230,7 +230,7 @@ class ModuleAnalyzer
         $disabledModules = [];
         
         // Get all registered modules
-        $allComponents = $this->componentRegistrar->getPaths(ComponentRegistrarInterface::MODULE);
+        $allComponents = $this->componentRegistrar->getPaths('module');
         
         foreach ($allComponents as $moduleName => $path) {
             if (!$this->moduleManager->isEnabled($moduleName) && !$this->isCoreModule($moduleName)) {

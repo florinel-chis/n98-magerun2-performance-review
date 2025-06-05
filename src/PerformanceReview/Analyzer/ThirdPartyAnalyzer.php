@@ -165,7 +165,7 @@ class ThirdPartyAnalyzer
             $incompatibleModules = [];
             
             // Check module composer.json for version constraints
-            $modulePaths = $this->componentRegistrar->getPaths(ComponentRegistrarInterface::MODULE);
+            $modulePaths = $this->componentRegistrar->getPaths('module');
             
             foreach ($modulePaths as $moduleName => $path) {
                 if ($this->isCoreModule($moduleName)) {
@@ -217,7 +217,7 @@ class ThirdPartyAnalyzer
         $issues = [];
         $outdatedIndicators = 0;
         
-        $modulePaths = $this->componentRegistrar->getPaths(ComponentRegistrarInterface::MODULE);
+        $modulePaths = $this->componentRegistrar->getPaths('module');
         
         foreach ($modulePaths as $moduleName => $path) {
             if ($this->isCoreModule($moduleName)) {
@@ -267,7 +267,7 @@ class ThirdPartyAnalyzer
         $issues = [];
         $qualityIssues = [];
         
-        $modulePaths = $this->componentRegistrar->getPaths(ComponentRegistrarInterface::MODULE);
+        $modulePaths = $this->componentRegistrar->getPaths('module');
         
         foreach ($modulePaths as $moduleName => $path) {
             if ($this->isCoreModule($moduleName)) {
