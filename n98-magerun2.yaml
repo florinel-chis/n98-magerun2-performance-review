@@ -1,0 +1,7 @@
+autoloaders_psr4:
+  PerformanceReview\: '%module%/src/PerformanceReview'
+
+commands:
+  customCommands:
+    - PerformanceReview\Command\ShowTitleCommand
+    - PerformanceReview\Command\PerformanceReviewCommand
