@@ -1,0 +1,12 @@
+# Test configuration for verifying extensibility
+commands:
+  PerformanceReview\Command\PerformanceReviewCommand:
+    analyzers:
+      test:
+        - id: test-analyzer
+          class: 'PerformanceReview\Tests\Fixtures\TestAnalyzer'
+          description: 'Test analyzer for unit tests'
+          category: test
+          config:
+            test_value: 123
+            enabled: true
