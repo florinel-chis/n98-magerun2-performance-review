@@ -15,7 +15,7 @@ n98-magerun2 loads configuration files in this order:
 
 **Solution**: Run the diagnostic script to check which locations are being checked:
 ```bash
-cd ~/fch/magento248
+cd <magento-root>
 php ~/.n98-magerun2/modules/performance-review/docs/scripts/diagnose.php
 ```
 
@@ -77,7 +77,7 @@ If API analyzer still runs, configuration is not being loaded.
 
 ### Step 1: Run the Fix Script
 ```bash
-cd ~/fch/magento248
+cd <magento-root>
 ~/.n98-magerun2/modules/performance-review/docs/scripts/fix-custom-analyzers.sh
 ```
 
@@ -92,7 +92,7 @@ This script will:
 If the script doesn't work, create this minimal configuration manually:
 
 ```bash
-cat > ~/fch/magento248/app/etc/n98-magerun2.yaml << 'EOF'
+cat > <magento-root>/app/etc/n98-magerun2.yaml << 'EOF'
 commands:
   PerformanceReview\\Command\\PerformanceReviewCommand:
     analyzers:
@@ -104,7 +104,7 @@ EOF
 
 Then verify:
 ```bash
-~/fch/n98-magerun2/n98-magerun2.phar --root-dir ~/fch/magento248 performance:review | grep "API Analysis"
+n98-magerun2.phar --root-dir <magento-root> performance:review | grep "API Analysis"
 ```
 
 If you don't see "API Analysis", the config is loading correctly.
@@ -115,8 +115,8 @@ Once configuration loading is confirmed, add a simple test analyzer:
 
 ```bash
 # Create test analyzer
-mkdir -p ~/fch/magento248/app/code/Test
-cat > ~/fch/magento248/app/code/Test/SimpleAnalyzer.php << 'EOF'
+mkdir -p <magento-root>/app/code/Test
+cat > <magento-root>/app/code/Test/SimpleAnalyzer.php << 'EOF'
 <?php
 namespace Test;
 use PerformanceReview\Api\AnalyzerCheckInterface;
@@ -135,7 +135,7 @@ class SimpleAnalyzer implements AnalyzerCheckInterface {
 EOF
 
 # Update configuration
-cat > ~/fch/magento248/app/etc/n98-magerun2.yaml << 'EOF'
+cat > <magento-root>/app/etc/n98-magerun2.yaml << 'EOF'
 autoloaders_psr4:
   Test\\: 'app/code/Test'
 
@@ -152,15 +152,15 @@ EOF
 ### Step 4: Clear Caches and Test
 ```bash
 rm -rf ~/.n98-magerun2/cache/*
-~/fch/n98-magerun2/n98-magerun2.phar --root-dir ~/fch/magento248 performance:review --list-analyzers | grep test-simple
-~/fch/n98-magerun2/n98-magerun2.phar --root-dir ~/fch/magento248 performance:review --category=test
+n98-magerun2.phar --root-dir <magento-root> performance:review --list-analyzers | grep test-simple
+n98-magerun2.phar --root-dir <magento-root> performance:review --category=test
 ```
 
 ## Debug Mode
 
 Run with maximum verbosity to see what's happening:
 ```bash
-~/fch/n98-magerun2/n98-magerun2.phar --root-dir ~/fch/magento248 performance:review -vvv 2>&1 | less
+n98-magerun2.phar --root-dir <magento-root> performance:review -vvv 2>&1 | less
 ```
 
 Look for:
@@ -222,7 +222,7 @@ ls ~/.n98-magerun2/modules/performance-review/src/PerformanceReview/Api/
 
 3. Check if it's a path resolution issue:
 ```bash
-cd ~/fch/magento248
+cd <magento-root>
 pwd  # Should show full path
 # Use this full path in autoloader config instead of relative paths
 ```

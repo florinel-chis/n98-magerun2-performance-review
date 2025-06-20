@@ -56,7 +56,7 @@ fi
 
 echo -e "\n${GREEN}Next steps:${NC}"
 echo "1. Test the new options:"
-echo -e "   ${YELLOW}~/fch/n98-magerun2/n98-magerun2.phar --root-dir ~/fch/magento248/ performance:review --list-analyzers${NC}"
+echo -e "   ${YELLOW}n98-magerun2.phar --root-dir <magento-root> performance:review --list-analyzers${NC}"
 echo ""
 echo "2. If you get 'option does not exist', try:"
 echo -e "   ${YELLOW}rm -rf ~/.n98-magerun2/cache/*${NC}"

@@ -1,15 +1,17 @@
-# YAML Configuration Loading - Step by Step
+# YAML Configuration Loading - Step by Step (Verified)
+
+**REALITY CHECK**: Based on actual testing, most config files don't exist by default. This guide shows what actually works.
 
 ## The Flow: How Everything Works Together
 
 ```
 1. You run: n98-magerun2.phar performance:review
                     ↓
-2. n98-magerun2 loads YAML files in order:
-   - /etc/n98-magerun2.yaml
-   - ~/.n98-magerun2.yaml  
-   - /path/to/magento/app/etc/n98-magerun2.yaml  ← YOUR CONFIG
-   - /path/to/magento/n98-magerun2.yaml
+2. n98-magerun2 looks for YAML files in order (only loads files that exist):
+   - Built-in config.yaml (always present)
+   - /etc/n98-magerun2.yaml (doesn't exist by default)
+   - ~/.n98-magerun2.yaml (doesn't exist by default)  
+   - <magento-root>/app/etc/n98-magerun2.yaml  ← CREATE THIS FILE
                     ↓
 3. Registers autoloaders from YAML:
    autoloaders_psr4:
@@ -34,7 +36,7 @@
 
 ### The Files Involved
 
-1. **Your Configuration** (`~/fch/magento248/app/etc/n98-magerun2.yaml`):
+1. **Your Configuration** (`<magento-root>/app/etc/n98-magerun2.yaml`):
 ```yaml
 autoloaders_psr4:
   MyCompany\PerformanceAnalyzer\: '~/.n98-magerun2/modules/performance-review/examples/CustomAnalyzers'
@@ -81,45 +83,55 @@ class RedisMemoryAnalyzer implements AnalyzerCheckInterface  // ← Matches YAML
 
 ## Quick Setup for Examples
 
-### Option 1: Copy and Modify Example
-
-1. Copy the example config:
-```bash
-cp ~/.n98-magerun2/modules/performance-review/examples/n98-magerun2.yaml.example ~/fch/magento248/app/etc/n98-magerun2.yaml
-```
-
-2. Edit the autoloader path:
-```bash
-# Change this line in the copied file:
-# MyCompany\PerformanceAnalyzer\: '/path/to/your/custom/analyzers'
-# To:
-# MyCompany\PerformanceAnalyzer\: '~/.n98-magerun2/modules/performance-review/examples/CustomAnalyzers'
-```
-
-3. Test:
-```bash
-n98-magerun2.phar --root-dir ~/fch/magento248 performance:review --list-analyzers
-```
-
-### Option 2: Use the Demo Script
+### Option 1: Use the Demo Script (Easiest)
 
 ```bash
 ~/.n98-magerun2/modules/performance-review/docs/scripts/demo-example-analyzers.sh
 ```
 
+This script creates the configuration file with correct paths automatically.
+
+### Option 2: Copy and Modify Example
+
+1. Copy the example config:
+```bash
+cp ~/.n98-magerun2/modules/performance-review/examples/n98-magerun2.yaml.example <magento-root>/app/etc/n98-magerun2.yaml
+```
+
+2. Edit the autoloader path to point to the examples:
+```bash
+# The example file already has the correct path for the provided examples:
+# MyCompany\PerformanceAnalyzer\: '~/.n98-magerun2/modules/performance-review/examples/CustomAnalyzers'
+```
+
+3. Test:
+```bash
+n98-magerun2.phar --root-dir <magento-root> performance:review --list-analyzers
+```
+
+### Option 2: Use the Demo Script
+
+```bash
+~/.n98-magerun2/modules/performance-review/docs/scripts/demo-example-analyzers.sh <magento-root>
+```
+
 This script:
-- Creates the correct configuration
+- Creates the correct configuration for your Magento installation
 - Tests if it loads
 - Shows you exactly what happens
 
-## Configuration Locations (in order)
+## Configuration File Locations (in loading order)
 
-1. **System**: `/etc/n98-magerun2.yaml` (affects all users)
-2. **User**: `~/.n98-magerun2.yaml` (affects just you)
-3. **Project**: `~/fch/magento248/app/etc/n98-magerun2.yaml` (affects just this project) ← **Recommended**
-4. **Project Root**: `~/fch/magento248/n98-magerun2.yaml` (alternative)
+These are the **supported locations** where n98-magerun2 will look for config files:
 
-**Best Practice**: Use project-level configuration so each Magento project can have different analyzers.
+1. **System**: `/etc/n98-magerun2.yaml` (create manually if needed - affects all users)
+2. **User**: `~/.n98-magerun2.yaml` (create manually if needed - affects just you)
+3. **Project**: `<magento-root>/app/etc/n98-magerun2.yaml` ← **CREATE THIS ONE**
+4. **Project Root**: `<magento-root>/n98-magerun2.yaml` (alternative)
+
+**IMPORTANT**: None of these files exist by default except the module registration file.
+
+**Best Practice**: Use project-level configuration (`app/etc/n98-magerun2.yaml`) so each Magento project can have different analyzers.
 
 ## Why It Might Not Work
 
@@ -154,22 +166,16 @@ RedisMemoryAnalyzer.php  # Must match exactly
 
 ## Testing Your Configuration
 
-### Step 1: Basic Test
+### Step 1: List Test (Most Important)
 ```bash
-# This should NOT show "API Analysis" if config is loading
-n98-magerun2.phar --root-dir ~/fch/magento248 performance:review | grep "API Analysis"
+# This should show your custom analyzers if config is working
+n98-magerun2.phar --root-dir <magento-root> performance:review --list-analyzers
 ```
 
-### Step 2: List Test
+### Step 2: Run Test  
 ```bash
-# This should show your custom analyzers
-n98-magerun2.phar --root-dir ~/fch/magento248 performance:review --list-analyzers | grep -i redis
-```
-
-### Step 3: Run Test
-```bash
-# This should execute your analyzer
-n98-magerun2.phar --root-dir ~/fch/magento248 performance:review --category=custom
+# Run only your custom analyzers to test them
+n98-magerun2.phar --root-dir <magento-root> performance:review --skip-analyzer=configuration --skip-analyzer=database --skip-analyzer=modules --skip-analyzer=codebase --skip-analyzer=frontend --skip-analyzer=indexing --skip-analyzer=php --skip-analyzer=mysql --skip-analyzer=redis --skip-analyzer=api --skip-analyzer=thirdparty
 ```
 
 ## The Magic Behind the Scenes
@@ -189,4 +195,10 @@ When `PerformanceReviewCommand` runs, it:
 4. **PHP autoloader** finds your file using the namespace mapping
 5. **Your analyzer runs** and creates issues
 
-The key insight: **You don't call your analyzer directly**. The Performance Review Command finds it through the YAML configuration and calls it for you.
+## Key Insights From Testing
+
+1. **Only module registration exists by default** - all other config files must be created
+2. **Configuration does work** - when you create the file, custom analyzers appear in `--list-analyzers`
+3. **Use project-level config** - `<magento-root>/app/etc/n98-magerun2.yaml` is recommended
+4. **Test with --list-analyzers first** - this proves your configuration is loading
+5. **You don't call analyzers directly** - the Performance Review Command finds them via YAML config

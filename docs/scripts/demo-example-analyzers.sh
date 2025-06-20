@@ -11,7 +11,15 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-MAGENTO_ROOT="${1:-$HOME/fch/magento248}"
+# Get Magento root from command line argument or default
+if [ -z "$1" ]; then
+    echo -e "${RED}Error: Please provide Magento root directory${NC}"
+    echo "Usage: $0 <magento-root>"
+    echo "Example: $0 /var/www/magento"
+    exit 1
+fi
+
+MAGENTO_ROOT="$1"
 MODULE_PATH="$HOME/.n98-magerun2/modules/performance-review"
 
 echo -e "${BLUE}Magento Root:${NC} $MAGENTO_ROOT"
@@ -74,7 +82,7 @@ echo "====================================="
 
 # Check if API analyzer is disabled (proves config loads)
 echo -e "${BLUE}Testing if core analyzer can be disabled...${NC}"
-API_COUNT=$(~/fch/n98-magerun2/n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review 2>&1 | grep -c "API Analysis" || true)
+API_COUNT=$(n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review 2>&1 | grep -c "API Analysis" || true)
 
 if [ "$API_COUNT" -eq "0" ]; then
     echo -e "${GREEN}✓${NC} Configuration is loading! (API analyzer was disabled)"
@@ -86,18 +94,18 @@ fi
 echo -e "\n${YELLOW}Step 5: Listing All Analyzers${NC}"
 echo "============================="
 echo -e "${BLUE}Running: --list-analyzers${NC}"
-~/fch/n98-magerun2/n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers
+n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers
 
 # Step 6: Check for example analyzers
 echo -e "\n${YELLOW}Step 6: Checking for Example Analyzers${NC}"
 echo "======================================"
-EXAMPLE_COUNT=$(~/fch/n98-magerun2/n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers 2>&1 | grep -c "example" || true)
+EXAMPLE_COUNT=$(n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers 2>&1 | grep -c "example" || true)
 
 if [ "$EXAMPLE_COUNT" -gt "0" ]; then
     echo -e "${GREEN}✓${NC} Found $EXAMPLE_COUNT example analyzer(s)!"
     echo ""
     echo "Example analyzers found:"
-    ~/fch/n98-magerun2/n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers 2>&1 | grep "example" || true
+    n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers 2>&1 | grep "example" || true
 else
     echo -e "${RED}✗${NC} No example analyzers found"
     echo ""
@@ -109,7 +117,7 @@ else
     php -l "$MODULE_PATH/examples/CustomAnalyzers/RedisMemoryAnalyzer.php"
     echo ""
     echo "3. Run with verbose mode:"
-    ~/fch/n98-magerun2/n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers -vvv 2>&1 | head -20
+    n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --list-analyzers -vvv 2>&1 | head -20
 fi
 
 # Step 7: Try to run example analyzers
@@ -118,10 +126,10 @@ echo "================================="
 
 if [ "$EXAMPLE_COUNT" -gt "0" ]; then
     echo -e "${BLUE}Running Redis memory analyzer example...${NC}"
-    ~/fch/n98-magerun2/n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --category=redis 2>&1 | grep -A5 -B5 "redis" || echo "No Redis output found"
+    n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --category=redis 2>&1 | grep -A5 -B5 "redis" || echo "No Redis output found"
     
     echo -e "\n${BLUE}Running all example analyzers...${NC}"
-    ~/fch/n98-magerun2/n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --category=examples || echo "No examples category found"
+    n98-magerun2.phar --root-dir "$MAGENTO_ROOT" performance:review --category=examples || echo "No examples category found"
 else
     echo -e "${YELLOW}Skipping execution test - no analyzers loaded${NC}"
 fi
