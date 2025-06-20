@@ -1,0 +1,54 @@
+# Example n98-magerun2.yaml configuration for custom analyzers
+# 
+# Place this configuration in one of these locations:
+# - Project: app/etc/n98-magerun2.yaml
+# - User: ~/.n98-magerun2.yaml
+# - System: /etc/n98-magerun2.yaml
+
+# Register PSR-4 autoloader for custom analyzer namespace
+autoloaders_psr4:
+  MyCompany\PerformanceAnalyzer\: '/path/to/your/custom/analyzers'
+
+# Configure custom analyzers for the performance review command
+commands:
+  PerformanceReview\Command\PerformanceReviewCommand:
+    analyzers:
+      # Custom analyzer group
+      custom:
+        # Redis memory analyzer
+        - id: redis-memory
+          class: 'MyCompany\PerformanceAnalyzer\RedisMemoryAnalyzer'
+          description: 'Check Redis memory usage and fragmentation'
+          category: redis
+          config:
+            fragmentation_threshold: 1.5
+            memory_limit_mb: 2048
+        
+        # Elasticsearch health analyzer
+        - id: elasticsearch-health
+          class: 'MyCompany\PerformanceAnalyzer\ElasticsearchHealthAnalyzer'
+          description: 'Check Elasticsearch cluster health and index status'
+          category: search
+      
+      # You can also disable core analyzers
+      core:
+        # Disable specific core analyzers by setting enabled: false
+        # modules:
+        #   enabled: false
+      
+      # Project-specific analyzers
+      project:
+        # Example: Custom security analyzer
+        - id: security-headers
+          class: 'MyProject\Analyzer\SecurityHeaderAnalyzer'
+          description: 'Check security headers configuration'
+          category: security
+        
+        # Example: Custom integration analyzer
+        - id: payment-gateway
+          class: 'MyProject\Analyzer\PaymentGatewayAnalyzer'
+          description: 'Check payment gateway configuration and connectivity'
+          category: integration
+          config:
+            timeout: 10
+            test_mode: false
