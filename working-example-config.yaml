@@ -1,0 +1,13 @@
+# Working example configuration for n98-magerun2
+# Place this file in your Magento root as: app/etc/n98-magerun2.yaml
+
+commands:
+  # Use the full class name with namespace
+  PerformanceReview\Command\PerformanceReviewCommand:
+    analyzers:
+      # First, let's test by disabling a core analyzer
+      core:
+        api:
+          enabled: false
+      
+      # Custom analyzer group - but we need to fix the autoloader path first
