@@ -1,0 +1,69 @@
+# Example n98-magerun2.yaml configuration for custom analyzers
+# 
+# IMPORTANT: This file does NOT exist by default - you must create it manually
+# 
+# RECOMMENDED: Copy this to: <magento-root>/app/etc/n98-magerun2.yaml
+# 
+# Alternative locations (files don't exist by default - create as needed):
+# - System: /etc/n98-magerun2.yaml (create manually - affects all users)
+# - User: ~/.n98-magerun2.yaml (create manually - affects just you)  
+# - Project: <magento-root>/app/etc/n98-magerun2.yaml (recommended - affects just this project)
+
+# Register PSR-4 autoloader for custom analyzer namespace
+autoloaders_psr4:
+  # For the example analyzers provided with this module:
+  MyCompany\PerformanceAnalyzer\: '~/.n98-magerun2/modules/performance-review/examples/CustomAnalyzers'
+  
+  # For your own custom analyzers in Magento code directory:
+  # YourCompany\Analyzers\: 'app/code/YourCompany/Analyzers'
+  
+  # For your own custom analyzers in a separate directory:
+  # YourCompany\Analyzers\: '/path/to/your/custom/analyzers'
+
+# Configure custom analyzers for the performance review command
+commands:
+  PerformanceReview\Command\PerformanceReviewCommand:
+    analyzers:
+      # Custom analyzer group
+      custom:
+        # Redis memory analyzer
+        - id: redis-memory
+          class: 'MyCompany\PerformanceAnalyzer\RedisMemoryAnalyzer'
+          description: 'Check Redis memory usage and fragmentation'
+          category: redis
+          config:
+            fragmentation_threshold: 1.5
+            memory_limit_mb: 2048
+        
+        # Elasticsearch health analyzer
+        - id: elasticsearch-health
+          class: 'MyCompany\PerformanceAnalyzer\ElasticsearchHealthAnalyzer'
+          description: 'Check Elasticsearch cluster health and index status'
+          category: search
+      
+      # You can also disable core analyzers by setting enabled: false
+      core:
+        # Example: Disable the API analyzer
+        # api:
+        #   enabled: false
+        
+        # Example: Disable the modules analyzer  
+        # modules:
+        #   enabled: false
+      
+      # Your own project-specific analyzers (create your own classes)
+      project:
+        # Example: Custom security analyzer (you would need to create this class)
+        # - id: security-headers
+        #   class: 'MyProject\Analyzer\SecurityHeaderAnalyzer'
+        #   description: 'Check security headers configuration'
+        #   category: security
+        
+        # Example: Custom integration analyzer (you would need to create this class)
+        # - id: payment-gateway
+        #   class: 'MyProject\Analyzer\PaymentGatewayAnalyzer'
+        #   description: 'Check payment gateway configuration and connectivity'
+        #   category: integration
+        #   config:
+        #     timeout: 10
+        #     test_mode: false

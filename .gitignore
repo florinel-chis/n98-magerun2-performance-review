@@ -1,0 +1,88 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+.buildpath
+*.swp
+*.swo
+*.swn
+.vim/
+
+# PHP
+vendor/
+composer.phar
+.phpunit.result.cache
+.php_cs.cache
+.php-cs-fixer.cache
+phpunit.xml
+phpstan.neon
+psalm.xml
+
+# Build artifacts
+build/
+dist/
+*.phar
+!n98-magerun2.phar
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.cache
+tmp/
+temp/
+logs/
+
+# Test related
+coverage/
+.phpunit.cache/
+test-reports/
+test-results/
+
+# Local development
+.env
+.env.local
+*.local.yaml
+*.local.yml
+test-setup/
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+
+# Node (if ever needed)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Magento specific (when testing)
+var/
+generated/
+pub/static/
+dev/
+
+# Module development specific
+/test-analyzers/
+/app/
+*.test.php
+quick-test-*

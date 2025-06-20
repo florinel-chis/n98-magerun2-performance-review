@@ -2,6 +2,8 @@
 
 A comprehensive performance analysis tool for Magento 2, Mage-OS, and Adobe Commerce installations. This n98-magerun2 module performs an in-depth review of your Magento installation and provides actionable recommendations for optimization.
 
+**Current Status**: Beta - Functional with known limitations (see below)
+
 ## Overview
 
 The Performance Review module analyzes 11 different aspects of your Magento installation to identify performance bottlenecks, configuration issues, and optimization opportunities. It provides a professional report with color-coded priorities and specific recommendations.
@@ -80,6 +82,61 @@ Combine options as needed:
 ```bash
 n98-magerun2.phar performance:review --category=database --details --output-file=db-report.txt
 ```
+
+List all available analyzers (including custom ones):
+```bash
+n98-magerun2.phar performance:review --list-analyzers
+```
+
+Skip specific analyzers:
+```bash
+n98-magerun2.phar performance:review --skip-analyzer=redis --skip-analyzer=api
+```
+
+## Custom Analyzers
+
+The module supports custom analyzers, allowing you to add project-specific performance checks without modifying the core module. This follows n98-magerun2's extensibility patterns.
+
+### Quick Example
+
+1. Create your analyzer class:
+```php
+<?php
+namespace MyCompany\Analyzer;
+
+use PerformanceReview\Api\AnalyzerCheckInterface;
+use PerformanceReview\Model\Issue\Collection;
+
+class CustomCacheAnalyzer implements AnalyzerCheckInterface
+{
+    public function analyze(Collection $results): void
+    {
+        // Your analysis logic
+        $results->createIssue()
+            ->setPriority('medium')
+            ->setCategory('Cache')
+            ->setIssue('Custom cache issue detected')
+            ->setDetails('Description of the issue')
+            ->add();
+    }
+}
+```
+
+2. Register in `n98-magerun2.yaml`:
+```yaml
+autoloaders_psr4:
+  MyCompany\Analyzer\: 'app/code/MyCompany/Analyzer'
+
+commands:
+  PerformanceReview\Command\PerformanceReviewCommand:
+    analyzers:
+      custom:
+        - id: custom-cache
+          class: 'MyCompany\Analyzer\CustomCacheAnalyzer'
+          description: 'Check custom cache configuration'
+```
+
+See [CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md) for detailed documentation on creating custom analyzers.
 
 ## Analysis Categories
 
@@ -238,27 +295,53 @@ performance-review/
 ├── n98-magerun2.yaml         # Module configuration
 ├── src/
 │   └── PerformanceReview/
+│       ├── Api/              # Interfaces for extensibility
 │       ├── Analyzer/         # Individual analyzer classes
 │       ├── Command/          # CLI commands
 │       ├── Model/            # Data models
+│       │   └── Issue/        # Issue collection classes
 │       └── Util/             # Helper utilities
+├── examples/                 # Example custom analyzers
+│   ├── CustomAnalyzers/      # Example analyzer implementations
+│   └── n98-magerun2.yaml.example
+├── docs/                     # Additional documentation
+│   ├── development/          # Development docs and plans
+│   └── scripts/              # Utility scripts
+├── tests/                    # Test files
+│   └── Unit/                 # Unit tests
+├── .gitignore                # Git ignore rules
+├── CHANGELOG.md              # Version history
+├── CUSTOM_ANALYZERS.md       # Custom analyzer guide
+├── TESTING_GUIDE.md          # Testing instructions
+├── TROUBLESHOOTING.md        # Troubleshooting guide
+├── QUICK_TEST.md             # Quick test guide
 └── README.md                 # This file
 ```
 
 ### Extending the Module
 
-To add new analyzers:
+#### Option 1: Custom Analyzers (Recommended)
+Create custom analyzers without modifying the core module:
+1. Implement `AnalyzerCheckInterface` in your own namespace
+2. Register via `n98-magerun2.yaml` configuration
+3. No core modifications needed
+4. See [CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md) for details
+
+#### Option 2: Core Contribution
+To add analyzers to the core module:
 1. Create a new analyzer class in `src/PerformanceReview/Analyzer/`
 2. Implement the `analyze()` method returning an array of `IssueInterface`
 3. Add the analyzer to `PerformanceReviewCommand`
 4. Update the category list if adding a new category
+5. Submit a pull request
 
 ## Requirements
 
-- **n98-magerun2**: Latest version recommended
-- **Magento**: 2.3.x or higher (including Mage-OS and Adobe Commerce)
-- **PHP**: 7.4 or higher (8.1+ recommended)
-- **Memory**: Sufficient to load Magento environment
+- **n98-magerun2**: v7.0.0 or higher
+- **Magento**: 2.3.x - 2.4.7 (including Mage-OS 1.0.x and Adobe Commerce)
+- **PHP**: 7.4 or higher (8.1+ recommended for better performance)
+- **Memory**: Minimum 2GB PHP memory limit (4GB recommended for large catalogs)
+- **Permissions**: Read access to Magento installation and database
 
 ## Troubleshooting
 
@@ -280,6 +363,44 @@ Ensure the module files are readable:
 chmod -R 755 ~/.n98-magerun2/modules/performance-review
 ```
 
+## Known Issues and Limitations
+
+### Current Limitations
+
+1. **Error Handling**: Exceptions in analyzers are silently caught, making debugging difficult
+2. **Memory Usage**: Some analyzers may consume significant memory on large catalogs (100k+ products)
+3. **No Configuration**: All thresholds are hardcoded and cannot be customized
+4. **Limited Output Formats**: Only text output is supported (no JSON/XML)
+5. **No Test Coverage**: The module currently lacks unit and integration tests
+6. **Exit Codes**: Returns failure exit code (1) when high priority issues are found, which may not be suitable for all use cases
+
+### Technical Debt
+
+- Version detection logic needs improvement (currently falls back to hardcoded values)
+- Database queries could be optimized for better performance
+- Report formatting uses fixed column widths that may break with long content
+- Some analyzer methods load entire collections into memory instead of using count queries
+
+### Planned Improvements
+
+- Add comprehensive test coverage
+- Implement configurable thresholds via YAML configuration
+- Add JSON/XML output formats for automation
+- Improve error handling and logging
+- Optimize database queries and memory usage
+- Add progress indicators for long-running analyses
+
+## Additional Documentation
+
+For more detailed information, see:
+
+- **[CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md)** - Comprehensive guide for creating custom analyzers
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Detailed testing instructions
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions for common issues
+- **[QUICK_TEST.md](QUICK_TEST.md)** - 5-minute verification guide
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[docs/](docs/)** - Additional development documentation and utility scripts
+
 ## Contributing
 
 Contributions are welcome! Please:
@@ -287,6 +408,14 @@ Contributions are welcome! Please:
 2. Create a feature branch
 3. Add tests for new functionality
 4. Submit a pull request
+
+### Development Guidelines
+
+- Follow PSR-12 coding standards
+- Add unit tests for new analyzers
+- Update documentation for new features
+- Consider memory usage for large installations
+- Ensure compatibility with Magento 2.3.x - 2.4.x
 
 ## License
 
