@@ -20,6 +20,11 @@ use PerformanceReview\Analyzer\ApiAnalyzer;
 use PerformanceReview\Analyzer\ThirdPartyAnalyzer;
 use PerformanceReview\Model\IssueFactory;
 use PerformanceReview\Model\ReportGenerator;
+use PerformanceReview\Model\Issue\Collection;
+use PerformanceReview\Api\AnalyzerCheckInterface;
+use PerformanceReview\Api\ConfigAwareInterface;
+use PerformanceReview\Api\DependencyAwareInterface;
+use PerformanceReview\Analyzer\LegacyAnalyzerAdapter;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Cache\TypeListInterface;
@@ -113,6 +118,21 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
     private ?ReportGenerator $reportGenerator = null;
     
     /**
+     * @var array
+     */
+    private array $analyzerConfig = [];
+    
+    /**
+     * @var array
+     */
+    private array $customAnalyzers = [];
+    
+    /**
+     * @var OutputInterface|null
+     */
+    private ?OutputInterface $output = null;
+    
+    /**
      * Configure command
      */
     protected function configure(): void
@@ -142,6 +162,18 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
                 'd',
                 InputOption::VALUE_NONE,
                 'Show detailed information for issues'
+            )
+            ->addOption(
+                'list-analyzers',
+                'l',
+                InputOption::VALUE_NONE,
+                'List all available analyzers'
+            )
+            ->addOption(
+                'skip-analyzer',
+                's',
+                InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
+                'Skip specific analyzer(s) by ID'
             );
     }
     
@@ -255,6 +287,278 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
             $componentRegistrar,
             $this->issueFactory
         );
+        
+        // Load analyzer configuration
+        $this->loadAnalyzerConfiguration();
+    }
+    
+    /**
+     * Load analyzer configuration from YAML files
+     * 
+     * @return void
+     */
+    private function loadAnalyzerConfiguration(): void
+    {
+        $config = $this->getApplication()->getConfig();
+        $commandConfig = $config['commands'][self::class] ?? [];
+        $this->analyzerConfig = $commandConfig['analyzers'] ?? [];
+    }
+    
+    /**
+     * Get all available analyzers (both core and custom)
+     * 
+     * @return array
+     */
+    private function getAllAnalyzers(): array
+    {
+        $analyzers = [];
+        
+        // Add core analyzers with legacy adapter
+        $coreAnalyzers = [
+            'configuration' => [
+                'id' => 'configuration',
+                'name' => 'Configuration Analysis',
+                'description' => 'Check application mode, cache configuration, and settings',
+                'category' => 'config',
+                'class' => ConfigurationAnalyzer::class,
+                'adapter' => $this->configurationAnalyzer
+            ],
+            'database' => [
+                'id' => 'database',
+                'name' => 'Database Analysis',
+                'description' => 'Analyze database size, table optimization, and data volumes',
+                'category' => 'database',
+                'class' => DatabaseAnalyzer::class,
+                'adapter' => $this->databaseAnalyzer
+            ],
+            'modules' => [
+                'id' => 'modules',
+                'name' => 'Module Analysis',
+                'description' => 'Check installed modules and their impact',
+                'category' => 'modules',
+                'class' => ModuleAnalyzer::class,
+                'adapter' => $this->moduleAnalyzer
+            ],
+            'codebase' => [
+                'id' => 'codebase',
+                'name' => 'Codebase Analysis',
+                'description' => 'Examine code structure and custom code volume',
+                'category' => 'codebase',
+                'class' => CodebaseAnalyzer::class,
+                'adapter' => $this->codebaseAnalyzer
+            ],
+            'frontend' => [
+                'id' => 'frontend',
+                'name' => 'Frontend Analysis',
+                'description' => 'Check frontend optimization settings',
+                'category' => 'frontend',
+                'class' => FrontendAnalyzer::class,
+                'adapter' => $this->frontendAnalyzer
+            ],
+            'indexing' => [
+                'id' => 'indexing',
+                'name' => 'Indexer & Cron Analysis',
+                'description' => 'Review indexer status and cron job health',
+                'category' => 'indexing',
+                'class' => IndexerCronAnalyzer::class,
+                'adapter' => $this->indexerCronAnalyzer
+            ],
+            'php' => [
+                'id' => 'php',
+                'name' => 'PHP Configuration',
+                'description' => 'Review PHP configuration and extensions',
+                'category' => 'php',
+                'class' => PhpConfigurationAnalyzer::class,
+                'adapter' => $this->phpConfigurationAnalyzer
+            ],
+            'mysql' => [
+                'id' => 'mysql',
+                'name' => 'MySQL Configuration',
+                'description' => 'Check MySQL/MariaDB configuration settings',
+                'category' => 'mysql',
+                'class' => MysqlConfigurationAnalyzer::class,
+                'adapter' => $this->mysqlConfigurationAnalyzer
+            ],
+            'redis' => [
+                'id' => 'redis',
+                'name' => 'Redis Configuration',
+                'description' => 'Analyze Redis configuration and usage',
+                'category' => 'redis',
+                'class' => RedisConfigurationAnalyzer::class,
+                'adapter' => $this->redisConfigurationAnalyzer
+            ],
+            'api' => [
+                'id' => 'api',
+                'name' => 'API Analysis',
+                'description' => 'Check API integrations and OAuth tokens',
+                'category' => 'api',
+                'class' => ApiAnalyzer::class,
+                'adapter' => $this->apiAnalyzer
+            ],
+            'thirdparty' => [
+                'id' => 'thirdparty',
+                'name' => 'Third-party Analysis',
+                'description' => 'Identify problematic third-party extensions',
+                'category' => 'thirdparty',
+                'class' => ThirdPartyAnalyzer::class,
+                'adapter' => $this->thirdPartyAnalyzer
+            ]
+        ];
+        
+        // Add core analyzers (unless overridden in config)
+        foreach ($coreAnalyzers as $id => $analyzer) {
+            if (!isset($this->analyzerConfig['core'][$id]) || 
+                ($this->analyzerConfig['core'][$id]['enabled'] ?? true) !== false) {
+                $analyzers[$id] = $analyzer;
+            }
+        }
+        
+        // Load custom analyzers from configuration
+        $customAnalyzers = $this->loadCustomAnalyzers();
+        foreach ($customAnalyzers as $id => $analyzer) {
+            $analyzers[$id] = $analyzer;
+        }
+        
+        return $analyzers;
+    }
+    
+    /**
+     * Load custom analyzers from configuration
+     * 
+     * @return array
+     */
+    private function loadCustomAnalyzers(): array
+    {
+        $analyzers = [];
+        
+        // Merge all analyzer configurations
+        $allConfigs = [];
+        foreach ($this->analyzerConfig as $group => $groupAnalyzers) {
+            if (is_array($groupAnalyzers)) {
+                foreach ($groupAnalyzers as $analyzerConfig) {
+                    if (isset($analyzerConfig['id'])) {
+                        $allConfigs[$analyzerConfig['id']] = array_merge(
+                            ['group' => $group],
+                            $analyzerConfig
+                        );
+                    }
+                }
+            }
+        }
+        
+        foreach ($allConfigs as $id => $config) {
+            if (!isset($config['class'])) {
+                continue;
+            }
+            
+            $class = $config['class'];
+            
+            if (!class_exists($class)) {
+                if ($this->output && $this->output->isVerbose()) {
+                    $this->output->writeln(
+                        sprintf('<comment>Analyzer class not found: %s</comment>', $class)
+                    );
+                }
+                continue;
+            }
+            
+            // Check if it's a custom analyzer implementing our interface
+            $implementsInterface = false;
+            try {
+                $reflection = new \ReflectionClass($class);
+                $implementsInterface = $reflection->implementsInterface(AnalyzerCheckInterface::class);
+            } catch (\Exception $e) {
+                continue;
+            }
+            
+            if ($implementsInterface) {
+                // It's a new-style analyzer
+                $analyzer = new $class();
+                
+                if ($analyzer instanceof ConfigAwareInterface && isset($config['config'])) {
+                    $analyzer->setConfig($config['config']);
+                }
+                
+                $analyzers[$id] = [
+                    'id' => $id,
+                    'name' => $config['name'] ?? $config['description'] ?? $id,
+                    'description' => $config['description'] ?? '',
+                    'category' => $config['category'] ?? $config['group'] ?? 'custom',
+                    'instance' => $analyzer,
+                    'group' => $config['group'] ?? 'custom'
+                ];
+            } else {
+                // It's a legacy analyzer, wrap it
+                $analyzers[$id] = [
+                    'id' => $id,
+                    'name' => $config['name'] ?? $config['description'] ?? $id,
+                    'description' => $config['description'] ?? '',
+                    'category' => $config['category'] ?? $config['group'] ?? 'custom',
+                    'class' => $class,
+                    'group' => $config['group'] ?? 'custom',
+                    'config' => $config['config'] ?? []
+                ];
+            }
+        }
+        
+        return $analyzers;
+    }
+    
+    /**
+     * Get dependencies for injection
+     * 
+     * @return array
+     */
+    private function getDependencies(): array
+    {
+        return [
+            'deploymentConfig' => $this->deploymentConfig ?? null,
+            'appState' => $this->appState ?? null,
+            'cacheTypeList' => $this->cacheTypeList ?? null,
+            'scopeConfig' => $this->scopeConfig ?? null,
+            'resourceConnection' => $this->resourceConnection ?? null,
+            'productCollectionFactory' => $this->productCollectionFactory ?? null,
+            'categoryCollectionFactory' => $this->categoryCollectionFactory ?? null,
+            'urlRewriteCollectionFactory' => $this->urlRewriteCollectionFactory ?? null,
+            'moduleList' => $this->moduleList ?? null,
+            'moduleManager' => $this->moduleManager ?? null,
+            'componentRegistrar' => $this->componentRegistrar ?? null,
+            'filesystem' => $this->filesystem ?? null,
+            'indexerRegistry' => $this->indexerRegistry ?? null,
+            'scheduleCollectionFactory' => $this->scheduleCollectionFactory ?? null,
+            'productMetadata' => $this->productMetadata ?? null,
+            'issueFactory' => $this->issueFactory ?? null
+        ];
+    }
+    
+    /**
+     * List all available analyzers
+     * 
+     * @param OutputInterface $output
+     * @return void
+     */
+    private function listAnalyzers(OutputInterface $output): void
+    {
+        $analyzers = $this->getAllAnalyzers();
+        
+        $output->writeln('<info>Available Performance Analyzers:</info>');
+        $output->writeln('');
+        
+        $table = $this->getHelper('table');
+        $table->setHeaders(['ID', 'Name', 'Category', 'Description']);
+        
+        $rows = [];
+        foreach ($analyzers as $id => $analyzer) {
+            $rows[] = [
+                $id,
+                $analyzer['name'] ?? 'Unknown',
+                $analyzer['category'] ?? 'Unknown',
+                $analyzer['description'] ?? ''
+            ];
+        }
+        
+        $table->setRows($rows);
+        $table->render($output);
     }
     
     /**
@@ -267,6 +571,7 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $startTime = microtime(true);
+        $this->output = $output;
         
         // Detect and initialize Magento
         $this->detectMagento($output);
@@ -275,108 +580,100 @@ class PerformanceReviewCommand extends AbstractMagentoCommand
             return self::EXIT_CODE_FAILURE;
         }
         
+        // Handle --list-analyzers option
+        if ($input->getOption('list-analyzers')) {
+            $this->listAnalyzers($output);
+            return self::EXIT_CODE_SUCCESS;
+        }
+        
         $output->writeln('Starting Magento 2 Performance Review...');
         $output->writeln('');
         
-        $issues = [];
+        // Get all analyzers
+        $allAnalyzers = $this->getAllAnalyzers();
         $category = $input->getOption('category');
+        $skipAnalyzers = $input->getOption('skip-analyzer') ?: [];
         
-        try {
-            // Run configuration analysis
-            if (!$category || $category === 'config') {
-                $output->write('Checking configuration... ');
-                $configIssues = $this->configurationAnalyzer->analyze();
-                $issues = array_merge($issues, $configIssues);
-                $output->writeln('<info>✓</info>');
+        // Filter analyzers based on category and skip options
+        $analyzersToRun = [];
+        foreach ($allAnalyzers as $id => $analyzer) {
+            // Skip if in skip list
+            if (in_array($id, $skipAnalyzers)) {
+                continue;
             }
             
-            // Run database analysis
-            if (!$category || $category === 'database') {
-                $output->write('Analyzing database... ');
-                $databaseIssues = $this->databaseAnalyzer->analyze();
-                $issues = array_merge($issues, $databaseIssues);
-                $output->writeln('<info>✓</info>');
+            // Skip if category filter doesn't match
+            if ($category && $analyzer['category'] !== $category) {
+                continue;
             }
             
-            // Run module analysis
-            if (!$category || $category === 'modules') {
-                $output->write('Checking modules... ');
-                $moduleIssues = $this->moduleAnalyzer->analyze();
-                $issues = array_merge($issues, $moduleIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run codebase analysis
-            if (!$category || $category === 'codebase') {
-                $output->write('Analyzing codebase... ');
-                $codebaseIssues = $this->codebaseAnalyzer->analyze();
-                $issues = array_merge($issues, $codebaseIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run frontend analysis
-            if (!$category || $category === 'frontend') {
-                $output->write('Checking frontend optimization... ');
-                $frontendIssues = $this->frontendAnalyzer->analyze();
-                $issues = array_merge($issues, $frontendIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run indexer and cron analysis
-            if (!$category || $category === 'indexing') {
-                $output->write('Checking indexers and cron... ');
-                $indexerCronIssues = $this->indexerCronAnalyzer->analyze();
-                $issues = array_merge($issues, $indexerCronIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run PHP configuration analysis
-            if (!$category || $category === 'php') {
-                $output->write('Checking PHP configuration... ');
-                $phpIssues = $this->phpConfigurationAnalyzer->analyze();
-                $issues = array_merge($issues, $phpIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run MySQL configuration analysis
-            if (!$category || $category === 'mysql') {
-                $output->write('Checking MySQL configuration... ');
-                $mysqlIssues = $this->mysqlConfigurationAnalyzer->analyze();
-                $issues = array_merge($issues, $mysqlIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run Redis configuration analysis
-            if (!$category || $category === 'redis') {
-                $output->write('Checking Redis configuration... ');
-                $redisIssues = $this->redisConfigurationAnalyzer->analyze();
-                $issues = array_merge($issues, $redisIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run API analysis
-            if (!$category || $category === 'api') {
-                $output->write('Checking API configuration... ');
-                $apiIssues = $this->apiAnalyzer->analyze();
-                $issues = array_merge($issues, $apiIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-            // Run third-party extension analysis
-            if (!$category || $category === 'thirdparty') {
-                $output->write('Checking third-party extensions... ');
-                $thirdPartyIssues = $this->thirdPartyAnalyzer->analyze();
-                $issues = array_merge($issues, $thirdPartyIssues);
-                $output->writeln('<info>✓</info>');
-            }
-            
-        } catch (\Exception $e) {
-            $output->writeln('<error>Error: ' . $e->getMessage() . '</error>');
-            if ($output->isVerbose()) {
-                $output->writeln($e->getTraceAsString());
-            }
-            return self::EXIT_CODE_FAILURE;
+            $analyzersToRun[$id] = $analyzer;
         }
+        
+        if (empty($analyzersToRun)) {
+            $output->writeln('<comment>No analyzers to run based on your filters.</comment>');
+            return self::EXIT_CODE_SUCCESS;
+        }
+        
+        // Create issue collection
+        $issueCollection = new Collection($this->issueFactory);
+        
+        // Run analyzers
+        foreach ($analyzersToRun as $id => $analyzerData) {
+            $output->write(sprintf('Running %s... ', $analyzerData['name']));
+            
+            try {
+                if (isset($analyzerData['adapter'])) {
+                    // Legacy analyzer - use old method
+                    $issues = $analyzerData['adapter']->analyze();
+                    foreach ($issues as $issue) {
+                        $issueCollection->addIssue($issue);
+                    }
+                } elseif (isset($analyzerData['instance'])) {
+                    // New-style analyzer
+                    $analyzer = $analyzerData['instance'];
+                    
+                    // Set dependencies if needed
+                    if ($analyzer instanceof DependencyAwareInterface) {
+                        $analyzer->setDependencies($this->getDependencies());
+                    }
+                    
+                    // Run analysis
+                    $analyzer->analyze($issueCollection);
+                } else {
+                    // Custom legacy analyzer - use adapter
+                    $adapter = new LegacyAnalyzerAdapter($analyzerData['class']);
+                    
+                    if ($adapter instanceof ConfigAwareInterface && isset($analyzerData['config'])) {
+                        $adapter->setConfig($analyzerData['config']);
+                    }
+                    
+                    if ($adapter instanceof DependencyAwareInterface) {
+                        $adapter->setDependencies($this->getDependencies());
+                    }
+                    
+                    $adapter->analyze($issueCollection);
+                }
+                
+                $output->writeln('<info>✓</info>');
+            } catch (\Exception $e) {
+                $output->writeln('<error>✗</error>');
+                if ($output->isVerbose()) {
+                    $output->writeln('<error>  ' . $e->getMessage() . '</error>');
+                }
+                
+                // Add error as an issue
+                $issueCollection->createIssue()
+                    ->setPriority('low')
+                    ->setCategory('System')
+                    ->setIssue(sprintf('Analyzer "%s" failed', $analyzerData['name']))
+                    ->setDetails($e->getMessage())
+                    ->add();
+            }
+        }
+        
+        // Get all collected issues
+        $issues = $issueCollection->getIssues();
         
         $output->writeln('');
         
