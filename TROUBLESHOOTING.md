@@ -16,7 +16,7 @@ n98-magerun2 loads configuration files in this order:
 **Solution**: Run the diagnostic script to check which locations are being checked:
 ```bash
 cd ~/fch/magento248
-php ~/.n98-magerun2/modules/performance-review/diagnose.php
+php ~/.n98-magerun2/modules/performance-review/docs/scripts/diagnose.php
 ```
 
 ### 2. YAML Syntax Issues
@@ -78,7 +78,7 @@ If API analyzer still runs, configuration is not being loaded.
 ### Step 1: Run the Fix Script
 ```bash
 cd ~/fch/magento248
-~/.n98-magerun2/modules/performance-review/fix-custom-analyzers.sh
+~/.n98-magerun2/modules/performance-review/docs/scripts/fix-custom-analyzers.sh
 ```
 
 This script will:
@@ -201,7 +201,7 @@ mkdir -p ~/.n98-magerun2/my-analyzers
 
 ### "Option does not exist"
 - Module might be using old version
-- Run: `~/.n98-magerun2/modules/performance-review/install-feature.sh`
+- Run: `~/.n98-magerun2/modules/performance-review/docs/scripts/install-feature.sh`
 
 ### No custom analyzers in list
 - Configuration not loading
@@ -229,5 +229,5 @@ pwd  # Should show full path
 
 4. Try the diagnostic script:
 ```bash
-php ~/.n98-magerun2/modules/performance-review/diagnose.php
+php ~/.n98-magerun2/modules/performance-review/docs/scripts/diagnose.php
 ```

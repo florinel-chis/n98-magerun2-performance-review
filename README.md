@@ -304,7 +304,17 @@ performance-review/
 ├── examples/                 # Example custom analyzers
 │   ├── CustomAnalyzers/      # Example analyzer implementations
 │   └── n98-magerun2.yaml.example
-├── CUSTOM_ANALYZERS.md       # Custom analyzer documentation
+├── docs/                     # Additional documentation
+│   ├── development/          # Development docs and plans
+│   └── scripts/              # Utility scripts
+├── tests/                    # Test files
+│   └── Unit/                 # Unit tests
+├── .gitignore                # Git ignore rules
+├── CHANGELOG.md              # Version history
+├── CUSTOM_ANALYZERS.md       # Custom analyzer guide
+├── TESTING_GUIDE.md          # Testing instructions
+├── TROUBLESHOOTING.md        # Troubleshooting guide
+├── QUICK_TEST.md             # Quick test guide
 └── README.md                 # This file
 ```
 
@@ -379,6 +389,17 @@ chmod -R 755 ~/.n98-magerun2/modules/performance-review
 - Improve error handling and logging
 - Optimize database queries and memory usage
 - Add progress indicators for long-running analyses
+
+## Additional Documentation
+
+For more detailed information, see:
+
+- **[CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md)** - Comprehensive guide for creating custom analyzers
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Detailed testing instructions
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions for common issues
+- **[QUICK_TEST.md](QUICK_TEST.md)** - 5-minute verification guide
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[docs/](docs/)** - Additional development documentation and utility scripts
 
 ## Contributing
 

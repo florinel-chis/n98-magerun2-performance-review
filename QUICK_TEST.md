@@ -9,7 +9,7 @@ cd /path/to/your/magento
 
 ### 2. Run the test setup script
 ```bash
-~/.n98-magerun2/modules/performance-review/test-setup.sh
+~/.n98-magerun2/modules/performance-review/docs/scripts/test-setup.sh
 ```
 
 This creates:
