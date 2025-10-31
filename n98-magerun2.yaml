@@ -1,7 +1,20 @@
 autoloaders_psr4:
   PerformanceReview\: '%module%/src/PerformanceReview'
+  MyCompany\PerformanceAnalyzer\: '%module%/examples/CustomAnalyzers'
 
 commands:
   customCommands:
     - PerformanceReview\Command\ShowTitleCommand
     - PerformanceReview\Command\PerformanceReviewCommand
+
+  PerformanceReview\Command\PerformanceReviewCommand:
+    analyzers:
+      custom:
+        - id: unused-indexes
+          class: 'MyCompany\PerformanceAnalyzer\UnusedIndexAnalyzer'
+          description: 'Detect unused database indexes that waste space and slow writes'
+          category: database
+          config:
+            min_size_mb: 10
+            high_priority_mb: 500
+            medium_priority_mb: 100
