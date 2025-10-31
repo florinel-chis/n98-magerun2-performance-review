@@ -251,7 +251,34 @@ n98-magerun2.phar performance:review -v
 
 ## Example Analyzers
 
-See the `examples/CustomAnalyzers/` directory for complete examples:
+See the `examples/CustomAnalyzers/` directory for complete, production-ready examples:
+
+### UnusedIndexAnalyzer (Advanced Example - Gold Standard)
+
+A comprehensive reference implementation demonstrating all best practices:
+
+- **Purpose**: Detects unused database indexes that waste storage and slow down writes
+- **Interfaces**: Implements all three interfaces (AnalyzerCheckInterface, ConfigAwareInterface, DependencyAwareInterface)
+- **Error Handling**: Comprehensive exception handling with fallback queries
+- **Configuration**: Fully configurable thresholds for priority levels
+- **Testing**: 21 unit tests covering all scenarios including error cases
+- **Documentation**: Complete with README and setup guide
+- **Production Ready**: Professional code quality suitable for production use
+
+This analyzer serves as the **gold standard reference** for creating custom analyzers. Study this implementation to learn:
+- How to use all three interfaces properly
+- Best practices for error handling and graceful degradation
+- How to write comprehensive tests
+- How to make analyzers configurable
+- Professional code documentation and structure
+
+See:
+- `examples/CustomAnalyzers/UnusedIndexAnalyzer.php` - Main analyzer code
+- `examples/CustomAnalyzers/README-UnusedIndexAnalyzer.md` - Detailed documentation
+- `examples/CustomAnalyzers/SETUP-UnusedIndexAnalyzer.md` - Setup instructions
+- `tests/Unit/Analyzer/UnusedIndexAnalyzerTest.php` - Comprehensive test suite
+
+### Other Examples
 
 - `RedisMemoryAnalyzer.php` - Checks Redis memory usage and fragmentation
 - `ElasticsearchHealthAnalyzer.php` - Monitors Elasticsearch cluster health

@@ -46,6 +46,8 @@ You should see all analyzers run except Redis and API.
 
 ## Testing Custom Analyzers
 
+The module includes several example analyzers. The **UnusedIndexAnalyzer** is the most comprehensive and serves as a reference implementation.
+
 ### 1. Set Up Example Analyzers
 
 Create a test configuration file in your Magento root:
@@ -64,6 +66,16 @@ commands:
   PerformanceReview\Command\PerformanceReviewCommand:
     analyzers:
       custom:
+        # Gold standard reference implementation
+        - id: unused-indexes
+          class: 'MyCompany\PerformanceAnalyzer\UnusedIndexAnalyzer'
+          description: 'Detect unused database indexes that waste space and slow writes'
+          category: database
+          config:
+            min_size_mb: 10
+            high_priority_mb: 500
+            medium_priority_mb: 100
+
         - id: redis-memory
           class: 'MyCompany\PerformanceAnalyzer\RedisMemoryAnalyzer'
           description: 'Check Redis memory usage and fragmentation'
@@ -71,7 +83,7 @@ commands:
           config:
             fragmentation_threshold: 1.2
             memory_limit_mb: 512
-        
+
         - id: elasticsearch-health
           class: 'MyCompany\PerformanceAnalyzer\ElasticsearchHealthAnalyzer'
           description: 'Check Elasticsearch cluster health'
@@ -197,6 +209,83 @@ Look for output like:
 - "Redis memory usage exceeds limit" (if usage > configured limit)
 - "Redis is evicting keys" (if evictions detected)
 
+## Testing UnusedIndexAnalyzer (Recommended)
+
+The UnusedIndexAnalyzer is the most comprehensive example and demonstrates all best practices.
+
+### 1. Prerequisites
+
+The analyzer requires MySQL performance_schema to be enabled:
+
+```bash
+# Check if performance_schema is enabled
+mysql -u magento_user -p -e "SHOW VARIABLES LIKE 'performance_schema'"
+# Should show: performance_schema | ON
+```
+
+If it's OFF, enable it:
+```bash
+# Edit MySQL config (my.cnf or my.ini)
+[mysqld]
+performance_schema = ON
+
+# Restart MySQL
+sudo systemctl restart mysql
+```
+
+### 2. Run the Analyzer
+
+```bash
+# Run just the unused index analyzer
+n98-magerun2.phar performance:review --category=database
+
+# Or run with verbose output
+n98-magerun2.phar performance:review --category=database -vvv
+```
+
+### 3. Expected Behavior
+
+**If performance_schema is enabled:**
+- Analyzer scans for unused indexes
+- Reports indexes larger than min_size_mb (default 10MB)
+- Provides DROP INDEX commands
+- Assigns priority based on size (high/medium/low)
+
+**If performance_schema is disabled:**
+- Analyzer creates LOW priority warning
+- Suggests enabling performance_schema
+- Doesn't break the review process
+
+**If no unused indexes found:**
+- No issues reported (good!)
+
+### 4. Test with Configuration Changes
+
+```yaml
+# Try different thresholds
+analyzers:
+  custom:
+    - id: unused-indexes
+      config:
+        min_size_mb: 1           # Report even small indexes
+        high_priority_mb: 100    # Lower high priority threshold
+        medium_priority_mb: 25   # Lower medium priority threshold
+```
+
+### 5. Study the Code
+
+This analyzer demonstrates:
+- All three interfaces (AnalyzerCheckInterface, ConfigAwareInterface, DependencyAwareInterface)
+- Comprehensive error handling
+- Fallback queries for different MySQL versions
+- Graceful degradation when features unavailable
+- Proper testing with 21 unit tests
+
+See:
+- `examples/CustomAnalyzers/UnusedIndexAnalyzer.php` - Main code
+- `examples/CustomAnalyzers/README-UnusedIndexAnalyzer.md` - Full documentation
+- `tests/Unit/Analyzer/UnusedIndexAnalyzerTest.php` - Test suite
+
 ## Testing Configuration Options
 
 ### 1. Test Analyzer Configuration
@@ -273,6 +362,9 @@ public function analyze(Collection $results): void
 - [ ] Verbose mode shows analyzer loading information
 - [ ] Category filtering works with custom categories
 - [ ] Core analyzers can be disabled via configuration
+- [ ] UnusedIndexAnalyzer loads and runs without errors
+- [ ] UnusedIndexAnalyzer handles performance_schema being disabled gracefully
+- [ ] Test suite passes (21 tests for UnusedIndexAnalyzer)
 
 ### Sample Output
 

@@ -136,6 +136,21 @@ commands:
           description: 'Check custom cache configuration'
 ```
 
+### Example Analyzers Included
+
+The module includes several complete, production-ready example analyzers in `examples/CustomAnalyzers/`:
+
+- **UnusedIndexAnalyzer** - Detects unused database indexes that waste storage and slow down writes
+  - Comprehensive test coverage (21 unit tests)
+  - Configurable thresholds for priority levels
+  - Production-ready with proper error handling
+  - See `examples/CustomAnalyzers/README-UnusedIndexAnalyzer.md` for detailed documentation
+
+- **RedisMemoryAnalyzer** - Checks Redis memory usage and fragmentation
+- **ElasticsearchHealthAnalyzer** - Monitors Elasticsearch cluster health
+
+These examples demonstrate best practices for custom analyzer development and can be used as reference implementations.
+
 See [CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md) for detailed documentation on creating custom analyzers.
 
 ## Analysis Categories

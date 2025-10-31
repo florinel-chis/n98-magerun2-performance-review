@@ -1,22 +1,22 @@
 # Example n98-magerun2.yaml configuration for custom analyzers
-# 
+#
 # IMPORTANT: This file does NOT exist by default - you must create it manually
-# 
+#
 # RECOMMENDED: Copy this to: <magento-root>/app/etc/n98-magerun2.yaml
-# 
+#
 # Alternative locations (files don't exist by default - create as needed):
 # - System: /etc/n98-magerun2.yaml (create manually - affects all users)
-# - User: ~/.n98-magerun2.yaml (create manually - affects just you)  
+# - User: ~/.n98-magerun2.yaml (create manually - affects just you)
 # - Project: <magento-root>/app/etc/n98-magerun2.yaml (recommended - affects just this project)
 
 # Register PSR-4 autoloader for custom analyzer namespace
 autoloaders_psr4:
   # For the example analyzers provided with this module:
   MyCompany\PerformanceAnalyzer\: '~/.n98-magerun2/modules/performance-review/examples/CustomAnalyzers'
-  
+
   # For your own custom analyzers in Magento code directory:
   # YourCompany\Analyzers\: 'app/code/YourCompany/Analyzers'
-  
+
   # For your own custom analyzers in a separate directory:
   # YourCompany\Analyzers\: '/path/to/your/custom/analyzers'
 
@@ -34,23 +34,33 @@ commands:
           config:
             fragmentation_threshold: 1.5
             memory_limit_mb: 2048
-        
+
         # Elasticsearch health analyzer
         - id: elasticsearch-health
           class: 'MyCompany\PerformanceAnalyzer\ElasticsearchHealthAnalyzer'
           description: 'Check Elasticsearch cluster health and index status'
           category: search
-      
+
+        # Unused database index analyzer
+        - id: unused-indexes
+          class: 'MyCompany\PerformanceAnalyzer\UnusedIndexAnalyzer'
+          description: 'Detect unused database indexes that waste space and slow writes'
+          category: database
+          config:
+            min_size_mb: 10          # Only report indexes larger than this (MB)
+            high_priority_mb: 500    # Indexes >500MB are high priority
+            medium_priority_mb: 100  # Indexes >100MB are medium priority
+
       # You can also disable core analyzers by setting enabled: false
       core:
         # Example: Disable the API analyzer
         # api:
         #   enabled: false
-        
-        # Example: Disable the modules analyzer  
+
+        # Example: Disable the modules analyzer
         # modules:
         #   enabled: false
-      
+
       # Your own project-specific analyzers (create your own classes)
       project:
         # Example: Custom security analyzer (you would need to create this class)
@@ -58,7 +68,7 @@ commands:
         #   class: 'MyProject\Analyzer\SecurityHeaderAnalyzer'
         #   description: 'Check security headers configuration'
         #   category: security
-        
+
         # Example: Custom integration analyzer (you would need to create this class)
         # - id: payment-gateway
         #   class: 'MyProject\Analyzer\PaymentGatewayAnalyzer'

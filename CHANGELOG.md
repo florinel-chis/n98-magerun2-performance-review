@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **UnusedIndexAnalyzer** - Complete reference implementation for detecting unused database indexes
+  - Detects indexes that waste storage and slow down write operations
+  - Configurable thresholds for priority levels (high_priority_mb, medium_priority_mb, min_size_mb)
+  - Implements all three interfaces: AnalyzerCheckInterface, ConfigAwareInterface, DependencyAwareInterface
+  - Comprehensive error handling with fallback query support
+  - Production-ready with 21 unit tests covering all scenarios
+  - Complete documentation including README and setup guide
+  - Serves as gold standard reference for custom analyzer development
+
 ## [2.0.0-beta] - 2025-06-20
 
 ### Added
