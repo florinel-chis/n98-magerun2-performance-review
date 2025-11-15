@@ -140,18 +140,18 @@ commands:
 
 The module includes several complete, production-ready example analyzers in `examples/CustomAnalyzers/`:
 
-- **UnusedIndexAnalyzer** - Detects unused database indexes that waste storage and slow down writes
+- **UnusedIndexAnalyzer** ⭐ **Gold Standard** - Detects unused database indexes that waste storage and slow down writes
   - Comprehensive test coverage (21 unit tests)
   - Configurable thresholds for priority levels
   - Production-ready with proper error handling
-  - See `examples/CustomAnalyzers/README-UnusedIndexAnalyzer.md` for detailed documentation
+  - See [docs/examples/unused-index-analyzer/](docs/examples/unused-index-analyzer/) for detailed documentation
 
 - **RedisMemoryAnalyzer** - Checks Redis memory usage and fragmentation
 - **ElasticsearchHealthAnalyzer** - Monitors Elasticsearch cluster health
 
 These examples demonstrate best practices for custom analyzer development and can be used as reference implementations.
 
-See [CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md) for detailed documentation on creating custom analyzers.
+See [docs/user-guide/custom-analyzers.md](docs/user-guide/custom-analyzers.md) for detailed documentation on creating custom analyzers.
 
 ## Analysis Categories
 
@@ -319,17 +319,19 @@ performance-review/
 ├── examples/                 # Example custom analyzers
 │   ├── CustomAnalyzers/      # Example analyzer implementations
 │   └── n98-magerun2.yaml.example
-├── docs/                     # Additional documentation
-│   ├── development/          # Development docs and plans
-│   └── scripts/              # Utility scripts
+├── docs/                     # Documentation (see docs/README.md)
+│   ├── getting-started/      # Setup and quick test guides
+│   ├── user-guide/           # Custom analyzers, troubleshooting, YAML config
+│   ├── developer-guide/      # Development workflow, testing, internals
+│   ├── examples/             # Example documentation
+│   ├── reference/            # Changelog and technical references
+│   └── archive/              # Historical planning documents
 ├── tests/                    # Test files
 │   └── Unit/                 # Unit tests
+├── .github/                  # GitHub templates
+│   └── PULL_REQUEST_TEMPLATE.md
 ├── .gitignore                # Git ignore rules
-├── CHANGELOG.md              # Version history
-├── CUSTOM_ANALYZERS.md       # Custom analyzer guide
-├── TESTING_GUIDE.md          # Testing instructions
-├── TROUBLESHOOTING.md        # Troubleshooting guide
-├── QUICK_TEST.md             # Quick test guide
+├── CLAUDE.md                 # AI assistant guide
 └── README.md                 # This file
 ```
 
@@ -340,7 +342,7 @@ Create custom analyzers without modifying the core module:
 1. Implement `AnalyzerCheckInterface` in your own namespace
 2. Register via `n98-magerun2.yaml` configuration
 3. No core modifications needed
-4. See [CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md) for details
+4. See [docs/user-guide/custom-analyzers.md](docs/user-guide/custom-analyzers.md) for details
 
 #### Option 2: Core Contribution
 To add analyzers to the core module:
@@ -405,16 +407,30 @@ chmod -R 755 ~/.n98-magerun2/modules/performance-review
 - Optimize database queries and memory usage
 - Add progress indicators for long-running analyses
 
-## Additional Documentation
+## Documentation
 
-For more detailed information, see:
+📚 **Complete documentation is available in [docs/](docs/README.md)**
 
-- **[CUSTOM_ANALYZERS.md](CUSTOM_ANALYZERS.md)** - Comprehensive guide for creating custom analyzers
-- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Detailed testing instructions
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions for common issues
-- **[QUICK_TEST.md](QUICK_TEST.md)** - 5-minute verification guide
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
-- **[docs/](docs/)** - Additional development documentation and utility scripts
+### Quick Links
+
+**Getting Started:**
+- [Setup Guide](docs/getting-started/setup.md) - Installation and configuration
+- [Quick Test](docs/getting-started/quick-test.md) - Verify your installation
+
+**User Guide:**
+- [Custom Analyzers](docs/user-guide/custom-analyzers.md) - Create your own performance checks
+- [Troubleshooting](docs/user-guide/troubleshooting.md) - Common issues and solutions
+- [YAML Configuration](docs/user-guide/yaml-configuration.md) - Configure analyzers
+
+**Developer Guide:**
+- [Development Workflow](docs/developer-guide/development-workflow.md) - Contributing guidelines
+- [Testing Guide](docs/developer-guide/testing-guide.md) - Write and run tests
+- [YAML Internals](docs/developer-guide/yaml-internals.md) - How configuration loading works
+
+**Examples & Reference:**
+- [Unused Index Analyzer](docs/examples/unused-index-analyzer/) - Gold standard example ⭐
+- [Changelog](docs/reference/changelog.md) - Version history
+- [Full Documentation Index](docs/README.md) - Complete documentation map
 
 ## Contributing
 
