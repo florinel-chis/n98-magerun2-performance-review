@@ -84,8 +84,8 @@ The module includes production-ready example analyzers in `examples/CustomAnalyz
 
 **Files:**
 - `examples/CustomAnalyzers/UnusedIndexAnalyzer.php` - Implementation
-- `docs/examples/unused-index-analyzer/README.md` - Documentation
-- `docs/examples/unused-index-analyzer/setup.md` - Setup guide
+- `examples/CustomAnalyzers/README-UnusedIndexAnalyzer.md` - Documentation
+- `examples/CustomAnalyzers/SETUP-UnusedIndexAnalyzer.md` - Setup guide
 - `tests/Unit/Analyzer/UnusedIndexAnalyzerTest.php` - Test suite
 
 **Other Examples:**
@@ -205,12 +205,12 @@ The module includes production-ready example analyzers in `examples/CustomAnalyz
 
 4. **Update documentation:**
    - Add to README.md "Analysis Categories" section
-   - Add example to docs/user-guide/custom-analyzers.md if pattern is new
+   - Add example to CUSTOM_ANALYZERS.md if pattern is new
 
 **Files to modify:**
 - `src/PerformanceReview/Command/PerformanceReviewCommand.php`
 - `README.md`
-- Optionally `docs/user-guide/custom-analyzers.md`
+- Optionally `CUSTOM_ANALYZERS.md`
 
 ### Task 3: Debug Analyzer Not Loading
 
@@ -336,7 +336,7 @@ The module includes production-ready example analyzers in `examples/CustomAnalyz
    vendor/bin/phpunit
    ```
 
-**Note:** Test infrastructure is being developed. See docs/developer-guide/testing-guide.md for current status.
+**Note:** Test infrastructure is being developed. See TESTING_GUIDE.md for current status.
 
 ### Task 6: Add Configuration to Analyzer
 
@@ -587,7 +587,7 @@ vendor/bin/phpunit --coverage-html coverage/
 
 ### Integration Testing
 
-See docs/developer-guide/testing-guide.md for:
+See TESTING_GUIDE.md for:
 - Setting up test Magento environment
 - Running integration tests
 - Testing custom analyzers
@@ -719,25 +719,22 @@ n98-magerun2.phar performance:review --root-dir=/path/to/magento
 ## Related Documentation
 
 - **README.md** - User-facing documentation and overview
-- **docs/** - Complete documentation (see docs/README.md for index)
-  - **docs/getting-started/** - Setup and quick test guides
-  - **docs/user-guide/** - Custom analyzers, troubleshooting, YAML configuration
-  - **docs/developer-guide/** - Development workflow, testing, YAML internals
-  - **docs/examples/** - Reference implementations (UnusedIndexAnalyzer)
-  - **docs/reference/** - Changelog and technical references
-  - **docs/archive/** - Historical planning and implementation documents
+- **CUSTOM_ANALYZERS.md** - Detailed custom analyzer guide
+- **TESTING_GUIDE.md** - Testing instructions
+- **TROUBLESHOOTING.md** - Common issues and solutions
+- **CHANGELOG.md** - Version history
 
 ## Getting Help
 
 For questions or issues:
-1. Check docs/user-guide/troubleshooting.md
-2. Review UnusedIndexAnalyzer in docs/examples/unused-index-analyzer/ for best-practice reference
+1. Check TROUBLESHOOTING.md
+2. Review UnusedIndexAnalyzer in examples/CustomAnalyzers/ for best-practice reference
 3. Review other examples in examples/CustomAnalyzers/
-4. Browse documentation index at docs/README.md
+4. Check parent n98-magerun2 documentation at /Users/flo/fch/n98-magerun2/CLAUDE.md
 5. Submit issue or pull request
 
 ---
 
 **Version**: 2.0
-**Last Updated**: 2025-01-15
+**Last Updated**: 2025-01-31
 **Maintained For**: Claude Code and Sub-agents
